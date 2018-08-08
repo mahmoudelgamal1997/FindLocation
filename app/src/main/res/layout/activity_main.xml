@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#A0A0A0"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:layout_marginTop="10dp"
+        android:background="#941414"
+        android:paddingLeft="5dp"
+        android:paddingTop="15dp"
+        android:layout_gravity="center"
+        android:text="@string/Welcom"
+        android:textColor="#ffffff"
+        android:textSize="20sp" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        >
+
+        <TextView
+            android:layout_width="80dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="3dp"
+            android:paddingRight="3dp"
+            android:layout_marginTop="10dp"
+            android:background="#ffa700"
+            android:paddingLeft="5dp"
+            android:paddingTop="15dp"
+            android:text="@string/North"
+            android:textColor="#000000"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/north"
+            android:layout_width="230dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/shapes"
+            android:paddingTop="15dp"
+            android:textColor="#000000"
+            android:paddingLeft="3dp"
+            android:textSize="20sp" />
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        >
+
+        <TextView
+            android:layout_width="80dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="3dp"
+            android:layout_marginTop="10dp"
+            android:paddingRight="3dp"
+            android:background="#ffa700"
+            android:paddingLeft="5dp"
+            android:paddingTop="15dp"
+            android:text="@string/East"
+            android:textColor="#000000"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/east"
+            android:layout_width="230dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/shapes"
+            android:paddingTop="15dp"
+            android:textColor="#000000"
+            android:paddingLeft="3dp"
+            android:textSize="20sp" />
+
+
+
+
+    </LinearLayout>
+
+
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        >
+
+        <TextView
+            android:layout_width="80dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="3dp"
+            android:layout_marginTop="10dp"
+            android:paddingRight="3dp"
+            android:background="#ffa700"
+            android:paddingLeft="5dp"
+            android:paddingTop="15dp"
+            android:text="accurat"
+            android:textColor="#000000"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/accurancy"
+            android:layout_width="230dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/shapes"
+            android:paddingTop="15dp"
+            android:textColor="#000000"
+            android:paddingLeft="3dp"
+            android:textSize="20sp" />
+
+
+
+
+    </LinearLayout>
+
+
+
+
+
+
+
+
+
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="300dp"
+        android:layout_height="60dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="50dp"
+        android:background="@drawable/button_shapes"
+        android:paddingLeft="5dp"
+        android:text="@string/Exit"
+        android:textSize="20sp"
+        android:textColor="#ffffff"
+
+        />
+
+
+</LinearLayout>

@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Location</string>
+    <string name="Welcom">Welcome to SDEDC coordinates App</string>
+    <string name="Exit">Exit</string>
+    <string name="North">North</string>
+    <string name="East">East</string>
+
+</resources>
