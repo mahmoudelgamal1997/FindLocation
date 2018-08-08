@@ -5,6 +5,8 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -12,9 +14,12 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -24,6 +29,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -46,15 +52,18 @@ import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,LocationListener {
 
-    TextView North, East, Accurate, differ;
+    TextView North, East, Accurate ;
     Button button;
     double lat, lon = 0;
     FusedLocationProviderClient client;
     float minimum = 0;
     ProgressDialog progress;
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
+    GoogleApiClient mgoogleclient;
+    LocationRequest mLocationRequest;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,62 +82,50 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+
+
+
+
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
 
+                if (!checkInternetConnection(MainActivity.this)) {
 
-                if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
-
-                }
-                progress.setMessage("loading");
-                progress.show();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                client.getLastLocation().addOnSuccessListener(MainActivity.this, new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-
-                        minimum = location.getAccuracy();
-                        lat = location.getLatitude();
-                        lon = location.getLongitude();
-                        North.setText("" + String.format("%.6f", lat));
-                        East.setText("" + String.format("%.6f", lon));
-                        Accurate.setText("" + minimum);
-                        progress.dismiss();
+                    if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        // TODO: Consider calling
+                        //    ActivityCompat#requestPermissions
+                        // here to request the missing permissions, and then overriding
+                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                        //                                          int[] grantResults)
+                        // to handle the case where the user grants the permission. See the documentation
+                        // for ActivityCompat#requestPermissions for more details.
+                        return;
 
                     }
-                });
+                    progress.setMessage("loading");
+                    progress.show();
+
+                    client.getLastLocation().addOnSuccessListener(MainActivity.this, new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+
+                            minimum = location.getAccuracy();
+                            lat = location.getLatitude();
+                            lon = location.getLongitude();
+                            North.setText("" + String.format("%.6f", lat));
+                            East.setText("" + String.format("%.6f", lon));
+                            Toast.makeText(MainActivity.this, "by last location", Toast.LENGTH_SHORT).show();
+
+                            Accurate.setText("" + minimum);
+                            progress.dismiss();
+
+                        }
+                    });
+                }
+
             }
-
-
         });
 
 
@@ -156,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
 
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
-                    Toast.makeText(MainActivity.this, "Permission denied to accsrs location ", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Permission denied to accses location ", Toast.LENGTH_SHORT).show();
                     finish();
                     System.exit(0);
                 }
@@ -172,11 +169,9 @@ public class MainActivity extends AppCompatActivity {
 
 
     protected void createLocationRequest() {
-        LocationRequest mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(10000);
-        mLocationRequest.setFastestInterval(5000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
+
+        locationSetting();
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(mLocationRequest);
@@ -231,6 +226,7 @@ public class MainActivity extends AppCompatActivity {
                     case Activity.RESULT_OK:
                         // All required changes were successfully made
 
+
                         break;
                     case Activity.RESULT_CANCELED:
                         // The user was asked to change settings, but chose not to
@@ -245,15 +241,140 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
+
+
     @Override
     protected void onStart() {
         super.onStart();
 
-
         createLocationRequest();
+        prepareGoogleApi();
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (mgoogleclient.isConnected()){
+            requestLocation();
+        }
+
+
+    }
+
+
+    public void requestLocation() {
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        LocationServices.FusedLocationApi.requestLocationUpdates(mgoogleclient, mLocationRequest,  this);
+    }
+
+
+    public void prepareGoogleApi()
+    {
+        createGoogleApi();
+        locationSetting();
+    }
+
+
+
+    public void locationSetting(){
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(10000);
+        mLocationRequest.setFastestInterval(5000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+
+    }
+
+    public void createGoogleApi(){
+
+        mgoogleclient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+        mgoogleclient.connect();
 
 
 
 
     }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+
+        requestLocation();
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onLocationChanged(final Location location) {
+
+        if (checkInternetConnection(this)){
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    North.setText(""+location.getLatitude());
+                    East.setText(""+location.getLongitude());
+                    Accurate.setText(""+location.getAccuracy());
+                    Toast.makeText(MainActivity.this, "by googleApi", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+
+        }
+
+
+
+    }
+
+
+
+
+
+
+
+
+    public  boolean checkInternetConnection(Context context)
+    {
+        try
+        {
+            ConnectivityManager conMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+            if (conMgr.getActiveNetworkInfo() != null && conMgr.getActiveNetworkInfo().isAvailable() && conMgr.getActiveNetworkInfo().isConnected())
+                return true;
+            else
+                return false;
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+
+
 }
