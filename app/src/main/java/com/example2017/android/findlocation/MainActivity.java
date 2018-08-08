@@ -55,7 +55,6 @@ public class MainActivity extends AppCompatActivity {
     float minimum = 0;
     ProgressDialog progress;
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
-    GoogleApiClient mgoogleclient;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
