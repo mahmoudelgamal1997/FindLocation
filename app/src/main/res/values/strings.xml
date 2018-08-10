@@ -5,4 +5,8 @@
     <string name="North">North</string>
     <string name="East">East</string>
 
+
+    <string name="banner_ad_unit_id">ca-app-pub-7819737441034557/8624191221</string>
+    <string name="admob_interstitial_id">ca-app-pub-7819737441034557/8045993053</string>
+
 </resources>

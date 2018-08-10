@@ -1,34 +1,30 @@
 package com.example2017.android.findlocation;
 
-import android.*;
 import android.Manifest;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
+
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.content.pm.ActivityInfo;
-import android.content.pm.PackageInfo;
+
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.Uri;
-import android.provider.Settings;
+
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -58,23 +54,36 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     Button button;
     double lat, lon = 0;
     FusedLocationProviderClient client;
-    float minimum = 0;
-    ProgressDialog progress;
+    float  accurancy= 0;
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
     GoogleApiClient mgoogleclient;
     LocationRequest mLocationRequest;
-
+    InterstitialAd mInterstitialAd;
+    private InterstitialAd interstitial;
+    AdRequest adRequest;
+    int move=0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+
+
+
+        AdView mAdView = (AdView) findViewById(R.id.adView);
+        adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
+
+
+
+
 
         North = (TextView) findViewById(R.id.north);
         East = (TextView) findViewById(R.id.east);
         Accurate = (TextView) findViewById(R.id.accurancy);
         button = (Button) findViewById(R.id.button);
         client = LocationServices.getFusedLocationProviderClient(this);
-        progress = new ProgressDialog(MainActivity.this);
         requestPermission();
 
 
@@ -89,40 +98,70 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                move++;
 
+                if(move== 3 ){
 
-                if (!checkInternetConnection(MainActivity.this)) {
+                    // Prepare the Interstitial Ad
+                    interstitial = new InterstitialAd(MainActivity.this);
+                    // Insert the Ad Unit ID
+                    interstitial.setAdUnitId(getString(R.string.admob_interstitial_id));
 
-                    if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                        // TODO: Consider calling
-                        //    ActivityCompat#requestPermissions
-                        // here to request the missing permissions, and then overriding
-                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                        //                                          int[] grantResults)
-                        // to handle the case where the user grants the permission. See the documentation
-                        // for ActivityCompat#requestPermissions for more details.
-                        return;
-
-                    }
-                    progress.setMessage("loading");
-                    progress.show();
-
-                    client.getLastLocation().addOnSuccessListener(MainActivity.this, new OnSuccessListener<Location>() {
-                        @Override
-                        public void onSuccess(Location location) {
-
-                            minimum = location.getAccuracy();
-                            lat = location.getLatitude();
-                            lon = location.getLongitude();
-                            North.setText("" + String.format("%.6f", lat));
-                            East.setText("" + String.format("%.6f", lon));
-                            Toast.makeText(MainActivity.this, "by last location", Toast.LENGTH_SHORT).show();
-
-                            Accurate.setText("" + minimum);
-                            progress.dismiss();
-
+                    interstitial.loadAd(adRequest);
+                    // Prepare an Interstitial Ad Listener
+                    interstitial.setAdListener(new AdListener() {
+                        public void onAdLoaded() {
+                            // Call displayInterstitial() function
+                            displayInterstitial();
                         }
                     });
+
+                move=0;
+                }
+
+                if (! checkInternetConnection(MainActivity.this)) {
+
+                    try {
+
+
+
+                        if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                            // TODO: Consider calling
+                            //    ActivityCompat#requestPermissions
+                            // here to request the missing permissions, and then overriding
+                            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                            //                                          int[] grantResults)
+                            // to handle the case where the user grants the permission. See the documentation
+                            // for ActivityCompat#requestPermissions for more details.
+                            return;
+
+                        }
+
+                        client.getLastLocation().addOnSuccessListener(MainActivity.this, new OnSuccessListener<Location>() {
+                            @Override
+                            public void onSuccess(Location location) {
+                                try{
+                                    accurancy = location.getAccuracy();
+                                    lat = location.getLatitude();
+                                    lon = location.getLongitude();
+
+                                    North.setText("" + String.format("%.6f", lat));
+                                    East.setText("" + String.format("%.6f", lon));
+                                    Accurate.setText("" + accurancy);
+
+                                }catch (Exception e ){
+                                    // if proccess failed
+                                    Toast.makeText(MainActivity.this, "الاشاره ضعيفه يرجي الانتظار", Toast.LENGTH_LONG).show();
+
+                                }
+                            }
+                        });
+
+
+                    }catch (Exception e){
+
+                    }
+
                 }
 
             }
@@ -130,6 +169,47 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
     }
+
+
+
+    public void fusedlocationProvider()
+    {
+
+        if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+
+        }
+
+        client.getLastLocation().addOnSuccessListener(MainActivity.this, new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                try{
+                    accurancy = location.getAccuracy();
+                    lat = location.getLatitude();
+                    lon = location.getLongitude();
+
+                }catch (Exception e ){
+                    // if proccess failed
+                    Toast.makeText(MainActivity.this, "الاشاره ضعيفه يرجي الانتظار", Toast.LENGTH_LONG).show();
+
+                }
+            }
+        });
+
+
+
+    }
+
+
+
+
 
     public void requestPermission() {
 
@@ -248,6 +328,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     protected void onStart() {
         super.onStart();
 
+
         createLocationRequest();
         prepareGoogleApi();
     }
@@ -291,7 +372,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     public void locationSetting(){
         mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(10000);
+        mLocationRequest.setInterval(5000);
         mLocationRequest.setFastestInterval(5000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
@@ -332,13 +413,29 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public void onLocationChanged(final Location location) {
 
         if (checkInternetConnection(this)){
+
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    North.setText(""+location.getLatitude());
-                    East.setText(""+location.getLongitude());
-                    Accurate.setText(""+location.getAccuracy());
-                    Toast.makeText(MainActivity.this, "by googleApi", Toast.LENGTH_SHORT).show();
+
+                    fusedlocationProvider();
+                    if (accurancy > location.getAccuracy()){
+
+                        North.setText("" + String.format("%.6f", lat));
+                        East.setText("" + String.format("%.6f", lon));
+                        Accurate.setText(""+accurancy);
+
+                    }else {
+                        North.setText("" + String.format("%.6f", location.getLatitude()));
+                        East.setText("" + String.format("%.6f", location.getLongitude()));
+                        Accurate.setText(""+location.getAccuracy());
+
+
+                    }
+
+
+
+
                 }
             });
 
@@ -348,6 +445,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
     }
+
+
 
 
 
@@ -373,6 +472,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
 
         return false;
+    }
+
+
+
+    public void displayInterstitial() {
+// If Ads are loaded, show Interstitial else show nothing.
+        if (interstitial.isLoaded()) {
+            interstitial.show();
+        }
     }
 
 
